@@ -25,7 +25,7 @@ DEFAULT_CFG = dict(
     exp_id="base-s1", group="baseline", description="Baseline M-base",
     loss="ce",                 # "ce" | "mse"
     optimizer="sgd_momentum",  # "sgd" | "sgd_momentum" | "adam" | "adamw"
-    lr=None,                   # TODO: chọn bằng val, không dùng eval
+    lr=0.3,                    # chọn bằng val (Part 2: lưới 0.003..0.3, cao nhất val macro-F1)
     weight_decay=0.0, momentum=0.9,
     batch=512, epochs=20,
     hidden=(256, 128), dropout=0.0, init="he",
