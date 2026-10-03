@@ -19,7 +19,14 @@ from pathlib import Path
 def save_result(result: dict, results_dir: str = "../results") -> str:
     """Ghi result["cfg"], result["history"], result["summary"] (KHÔNG ghi best_state) ra
     <results_dir>/<exp_id>.json. Trả về đường dẫn file. Tạo thư mục nếu chưa có."""
-    raise NotImplementedError  # TODO
+    out_dir = Path(results_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    cfg = {k: (list(v) if isinstance(v, tuple) else v) for k, v in result["cfg"].items()}
+    payload = {"cfg": cfg, "history": result["history"], "summary": result["summary"]}
+    path = out_dir / f"{cfg['exp_id']}.json"
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    return str(path)
 
 
 def load_results(results_dir: str = "../results") -> list[dict]:

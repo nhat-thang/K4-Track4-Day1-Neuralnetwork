@@ -28,7 +28,15 @@ def build_optimizer(name: str, params, lr: float, weight_decay: float = 0.0,
          "adamw"        -> torch.optim.AdamW(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay)
     Chú ý: weight_decay của Adam (L2 trộn vào gradient) khác weight_decay của AdamW (suy giảm tách riêng).
     """
-    raise NotImplementedError  # TODO
+    if name not in OPTIMIZERS:
+        raise ValueError(f"optimizer phải thuộc {OPTIMIZERS}, nhận {name!r}")
+    if name == "sgd":
+        return torch.optim.SGD(params, lr=lr, weight_decay=weight_decay)
+    if name == "sgd_momentum":
+        return torch.optim.SGD(params, lr=lr, momentum=momentum, weight_decay=weight_decay)
+    if name == "adam":
+        return torch.optim.Adam(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay)
+    return torch.optim.AdamW(params, lr=lr, betas=betas, eps=eps, weight_decay=weight_decay)
 
 
 def build_scheduler(optimizer, name: str | None, total_steps: int, **kwargs):
@@ -49,4 +57,7 @@ def clip_gradients(params, max_norm: float | None) -> float:
     Giá trị trả về chính là `grad_norm` bạn phải ghi lại ở mỗi bước (để thấy "gai" gradient).
     Khi dùng mixed precision FP16 + GradScaler: phải scaler.unscale_(optimizer) TRƯỚC khi gọi hàm này.
     """
-    raise NotImplementedError  # TODO
+    # max_norm=inf: clip_grad_norm_ chỉ tính chuẩn toàn cục, hệ số cắt = 1 nên gradient không đổi
+    limit = float("inf") if max_norm is None else max_norm
+    total_norm = torch.nn.utils.clip_grad_norm_(params, limit)
+    return float(total_norm)
