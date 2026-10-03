@@ -180,8 +180,9 @@ def run_experiment(cfg: dict, data: dict) -> dict:
     # ---- 1. loss bước 0 (trước bước cập nhật đầu tiên)
     step0_loss = evaluate(model, X_val, y_val, cfg["loss"])["loss"]
 
+    # grad_norm_max: chuẩn lớn nhất trong epoch (thấy "gai"); clip_frac: tỉ lệ bước có chuẩn > clip_norm
     history = {k: [] for k in ("epoch", "train_loss", "val_loss", "val_acc", "val_macro_f1",
-                               "grad_norm", "epoch_time_s")}
+                               "grad_norm", "grad_norm_max", "clip_frac", "epoch_time_s")}
     best_val_loss, best_epoch, best_state = math.inf, None, None
     diverged = False
 
@@ -189,6 +190,7 @@ def run_experiment(cfg: dict, data: dict) -> dict:
     for epoch in range(1, cfg["epochs"] + 1):
         model.train()
         grad_norms = []
+        n_steps = n_clipped = 0
         if use_cuda:
             torch.cuda.synchronize(device)
         t0 = time.perf_counter()
@@ -213,6 +215,9 @@ def run_experiment(cfg: dict, data: dict) -> dict:
                 optimizer.step()
             if math.isfinite(gn):
                 grad_norms.append(gn)
+            n_steps += 1
+            if cfg["clip_norm"] is not None and gn > cfg["clip_norm"]:
+                n_clipped += 1
         if use_cuda:
             torch.cuda.synchronize(device)
         epoch_time = time.perf_counter() - t0
@@ -229,6 +234,8 @@ def run_experiment(cfg: dict, data: dict) -> dict:
         history["val_acc"].append(va["acc"])
         history["val_macro_f1"].append(va["macro_f1"])
         history["grad_norm"].append(float(np.mean(grad_norms)) if grad_norms else float("nan"))
+        history["grad_norm_max"].append(float(np.max(grad_norms)) if grad_norms else float("nan"))
+        history["clip_frac"].append(n_clipped / n_steps if n_steps else 0.0)
         history["epoch_time_s"].append(epoch_time)
 
         if not math.isfinite(va["loss"]):

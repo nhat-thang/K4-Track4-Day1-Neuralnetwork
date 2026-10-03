@@ -35,6 +35,10 @@ def plot_run(result: dict, path: str) -> None:
 
     ax = axes[2]
     ax.plot(ep, h["grad_norm"], marker="o", ms=3, color="tab:red", label="grad_norm TB (trước clip)")
+    if "grad_norm_max" in h:
+        ax.plot(ep, h["grad_norm_max"], ls=":", color="tab:red", alpha=0.7, label="grad_norm max trong epoch")
+    if cfg.get("clip_norm") is not None:
+        ax.axhline(cfg["clip_norm"], color="black", lw=1, label=f"ngưỡng clip c = {cfg['clip_norm']}")
     ax.set_title("Chuẩn gradient"); ax.set_xlabel("epoch"); ax.set_ylabel("‖g‖₂ trung bình epoch")
 
     for ax in axes:
@@ -61,4 +65,18 @@ def plot_compare(results: list[dict], metric: str, path: str, title: str = "") -
 
     Dùng cho ảnh figures/compare_<nhóm>.png (ví dụ compare_optimizer.png).
     """
-    raise NotImplementedError  # TODO
+    fig, ax = plt.subplots(figsize=(8, 4.5))
+    for r in results:
+        h = r["history"]
+        if not h["epoch"]:
+            continue
+        label = r["cfg"]["exp_id"] + ("  [DIVERGED]" if r["summary"].get("diverged") else "")
+        ax.plot(h["epoch"], h[metric], marker="o", ms=3, label=label)
+    ax.set_xlabel("epoch")
+    ax.set_ylabel(metric)
+    ax.set_title(title or f"So sánh {metric}")
+    ax.grid(alpha=0.3)
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(path, dpi=110, bbox_inches="tight")
+    plt.close(fig)

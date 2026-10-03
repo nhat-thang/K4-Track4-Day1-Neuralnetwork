@@ -95,5 +95,14 @@ def activation_stats(model: nn.Module, x: torch.Tensor) -> list[float]:
       1. model.eval(); h = x
       2. duyệt từng lớp con theo thứ tự; sau mỗi nn.Linear (hoặc sau mỗi ReLU, bạn chọn và ghi rõ) lưu h.std().item()
       3. trả về danh sách std theo lớp
+    Ở đây: lưu std SAU MỖI ReLU (đầu ra lớp ẩn) và sau Linear cuối (logits) -> len = số lớp ẩn + 1.
     """
-    raise NotImplementedError  # TODO
+    model.eval()
+    h = x
+    stds = []
+    layers = list(model.net)
+    for i, layer in enumerate(layers):
+        h = layer(h)
+        if isinstance(layer, nn.ReLU) or i == len(layers) - 1:
+            stds.append(h.std().item())
+    return stds
