@@ -67,7 +67,9 @@ def predict(model, X, batch_size: int = 8192) -> torch.Tensor:
 
     Các bước: model.eval(); duyệt X theo từng lô (không cần xáo); gom argmax(dim=1); torch.cat.
     """
-    raise NotImplementedError  # TODO
+    model.eval()
+    preds = [model(X[i:i + batch_size]).float().argmax(dim=1) for i in range(0, len(X), batch_size)]
+    return torch.cat(preds).to(torch.int64)
 
 
 @torch.no_grad()
@@ -274,7 +276,20 @@ def write_predictions(row_id, preds, path: str) -> None:
     preds  : nhãn dự đoán int64 0..6 (cùng thứ tự với row_id)
     Phải đủ mọi dòng của tập eval, mỗi row_id đúng một lần.
     """
-    raise NotImplementedError  # TODO
+    row_id = np.asarray(row_id, dtype=np.int64)
+    preds = np.asarray(preds, dtype=np.int64)
+    assert row_id.shape == preds.shape and row_id.ndim == 1, (row_id.shape, preds.shape)
+    assert len(np.unique(row_id)) == len(row_id), "row_id bị lặp"
+    assert preds.min() >= 0 and preds.max() <= 6, "pred phải nằm trong 0..6"
+    out = np.column_stack([row_id, preds])
+    np.savetxt(path, out, fmt="%d", delimiter=",", header="row_id,pred", comments="")
+
+
+def load_best_model(cfg: dict, result: dict, device) -> MLP:
+    """Dựng lại model của `cfg` và nạp best_state (epoch có val loss thấp nhất); trả về ở chế độ eval()."""
+    model = MLP(hidden=tuple(cfg["hidden"]), dropout=cfg["dropout"], init=cfg["init"])
+    model.load_state_dict(result["best_state"])
+    return model.to(device).eval()
 
 
 def final_eval(cfg: dict, result: dict, data: dict, pred_path: str) -> None:
@@ -285,5 +300,11 @@ def final_eval(cfg: dict, result: dict, data: dict, pred_path: str) -> None:
       2. preds = predict(model, data["X_eval"])  # fp32, eval mode
       3. write_predictions(data["eval_row_id"], preds.cpu().numpy(), pred_path)
       4. chạy `python scripts/evaluate.py --pred <pred_path>` và ghi kết quả vào bảng/báo cáo
+    Bước 4 do notebook thực hiện (cần biết thư mục gốc repo). Hàm này kiểm tra best_state có tồn tại và dự đoán ở FP32.
     """
-    raise NotImplementedError  # TODO
+    assert result["best_state"] is not None, "lần chạy này không có best_state (diverged?)"
+    device = data["X_eval"].device
+    model = load_best_model(cfg, result, device)          # fp32, eval mode (không autocast)
+    preds = predict(model, data["X_eval"])
+    assert len(preds) == len(data["eval_row_id"]) == 116_203
+    write_predictions(data["eval_row_id"], preds.cpu().numpy(), pred_path)
