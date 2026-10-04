@@ -1,4 +1,4 @@
-"""optimizer.py — PSEUDO-CODE. Bạn phải tự hoàn thiện mọi hàm có `raise NotImplementedError`.
+"""optimizer.py — bản hoàn thiện (Lab Day 1).
 
 Được dùng torch.optim.* và torch.nn.utils.clip_grad_norm_ (xem README mục 5).
 File này gom việc chọn bộ tối ưu và cắt gradient để `train.py` gọn và mọi thí nghiệm công bằng.
@@ -43,8 +43,13 @@ def build_scheduler(optimizer, name: str | None, total_steps: int, **kwargs):
     """(Tuỳ chọn) Bộ lập lịch tốc độ học, ví dụ cosine (slide có ví dụ CosineAnnealingLR).
 
     Trả về None nếu name là None. Nếu bạn dùng scheduler ở một thí nghiệm, hãy ghi vào bảng (cột notes).
+    Hiện chỉ hỗ trợ "cosine" (CosineAnnealingLR, T_max = total_steps). Chưa thí nghiệm nào trong bài dùng scheduler.
     """
-    raise NotImplementedError  # TODO
+    if name is None:
+        return None
+    if name == "cosine":
+        return torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=total_steps, **kwargs)
+    raise ValueError(f"scheduler không hỗ trợ: {name!r} (chỉ None hoặc 'cosine')")
 
 
 def clip_gradients(params, max_norm: float | None) -> float:

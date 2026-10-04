@@ -1,4 +1,4 @@
-"""model.py — PSEUDO-CODE. Bạn phải tự hoàn thiện mọi hàm/class có `raise NotImplementedError`.
+"""model.py — bản hoàn thiện (Lab Day 1).
 
 Model: MLP cho bài toán 7 lớp, shape cố định (xem README mục 3 và GUIDE, "Quy định kiến trúc"):
 

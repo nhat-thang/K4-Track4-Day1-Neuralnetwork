@@ -1,4 +1,4 @@
-"""results_table.py — PSEUDO-CODE. Bạn phải tự hoàn thiện mọi hàm có `raise NotImplementedError`.
+"""results_table.py — bản hoàn thiện (Lab Day 1).
 
 Nhiệm vụ: lưu kết quả từng lần chạy ra JSON, rồi điền vào experiments.xlsx từ mẫu
 templates/experiment_table_template.xlsx (đừng gõ tay hàng chục dòng, rất dễ sai).
