@@ -28,6 +28,8 @@
 
 Mọi so sánh dựa trên **val**, tại epoch có val loss thấp nhất; tham chiếu là `base-s1` (val macro-F1 0.8599). Mỗi thí nghiệm chỉ chạy 1 seed (seed 1) trừ khi ghi khác; "vượt nhiễu" nghĩa là |ΔF1| > 0.0074.
 
+*Lưu ý khi đối chiếu với `experiments.xlsx`:* cột `delta_val_f1_vs_base` / `beyond_noise` của bảng so với **trung bình 3 seed baseline** (0.8580), còn báo cáo so với `base-s1` (0.8599), nên 3 dòng sát ngưỡng có kết luận khác nhau: `opt-adam-lr0.003` (+0.0081 so với trung bình → "Có" trong bảng; +0.0061 so với `base-s1` → "không" trong báo cáo), `final-wide-s3` (+0.0083 → "Có"; +0.0064 → "không") và `amp-bf16` (−0.0059 → "Không"; −0.0079 → "có"). Cả ba nằm trong vùng "chưa chắc" của mục 2, nên mình không kết luận chắc theo hướng nào.
+
 ### 3.1 Hàm mất mát — CE vs MSE
 - **Dự đoán:** MSE hội tụ chậm hơn và macro-F1 thấp hơn vì gradient MSE (2(z − y)/(7B)) nhỏ hơn ~3.5 lần; tăng lr bù lại thì thu hẹp khoảng cách.
 - **Kết quả:** `loss-mse-lr0.3`: 0.7649 (Δ = −0.095, vượt nhiễu), chỉ chạm val acc 0.88 ở epoch 20 (baseline: epoch 6). `loss-mse-lr1`: 0.5837 (Δ = −0.276), **không** thu hẹp khoảng cách mà tệ hơn. Ảnh: `figures/compare_loss.png`. MSE tính như `nn.MSELoss` (không hệ số 1/2, trung bình trên mọi phần tử B × 7); không so giá trị loss giữa hai loại.
